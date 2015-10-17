@@ -1,5 +1,5 @@
-/*  
- * Tufts Comp 131 Recursive Backtracking Assignment
+/*
+ * Tufts Comp 131 Backtracking Assignment
  * Framework for sudoku solver by Anselm Blumer, 26 February, 2015
  * Should be able to handle 9x9, 16x16, and 25x25 (but you may not
  * want to wait for the larger sizes to finish)
@@ -28,6 +28,8 @@ using namespace std;
 int grid[MAXSIZE][MAXSIZE];
 int legal[MAXSIZE][MAXSIZE][MAXSIZE];
 int size, blocksize;
+int BTcounter;
+int IVcounter;
 
 /*
  * GetGrid reads the sudoku grid values from the file specified by its parameter
@@ -140,6 +142,232 @@ for (int i=0; i<size; i++) {
   }
 }
 }
+
+//function finds the next open spot
+
+void Nextopenspot(int &row, int &col){
+        for(int i = 0; i < size; i++){  
+          for(int j = 0; j < size; j++){
+            if(grid[i][j] == 0){
+              row = i;
+              col = j;
+              return;
+            }
+            
+          }
+        }
+}
+//function finds the number of open cells around specific coordinates
+int NumSurrounding(int row, int col ){
+  int TS = 0;
+  if((row == 0) && (col == 0)){ // Top left corner
+      if(grid[row][col + 1] == 0){
+        TS++;
+      }
+      if(grid[row + 1][col] == 0){
+        TS++;
+      }
+  }
+   else if((row == 0) && (col == size -1)){ // Top right corner
+      if(grid[row][col - 1] == 0){
+        TS++;
+      }
+      if(grid[row + 1][col] == 0){
+        TS++;
+      }
+  }
+  else if((row == size -1) && (col == 0)){ // Bottom left
+      if(grid[row][col + 1] == 0){
+        TS++;
+      }
+      if(grid[row - 1][col] == 0){
+        TS++;
+      }
+  }
+    else if((row == size-1) && (col == size -1)){ // Bottom right corner
+      if(grid[row][col - 1] == 0){
+        TS++;
+      }
+      if(grid[row - 1][col] == 0){
+        TS++;
+      }
+    }
+  else if(row == 0){ //top row
+    if(grid[row][col + 1] == 0){
+      TS++;
+      }
+    if(grid[row + 1][col] == 0){
+      TS++;
+    }
+    if(grid[row - 1][col] == 0){
+      TS++;
+    }
+  }
+  else if(row == size-1){ //bottom row
+    if(grid[row][col - 1] == 0){
+      TS++;
+      }
+    if(grid[row + 1][col] == 0){
+      TS++;
+    }
+    if(grid[row - 1][col] == 0){
+      TS++;
+    }
+  }
+  else if(col == 0){ //Left side
+    if(grid[row + 1][col] == 0){
+      TS++;
+      }
+    if(grid[row -1][col] == 0){
+      TS++;
+    }
+    if(grid[row][col + 1] == 0){
+      TS++;
+    }
+  }
+   else if(col == size-1){ //Left side
+    if(grid[row + 1][col] == 0){
+      TS++;
+      }
+    if(grid[row -1][col] == 0){
+      TS++;
+    }
+    if(grid[row][col - 1] == 0){
+      TS++;
+    }
+  }
+  else{
+    if(grid[row + 1][col] == 0){ //Right side
+      TS++;
+      }
+    if(grid[row -1][col] == 0){
+      TS++;
+    }
+    if(grid[row][col + 1] == 0){
+      TS++;
+    }
+    if(grid[row][col - 1] == 0){
+      TS++;
+    }
+  }
+  return(TS);
+}
+
+//function chooses the cell with the most number of open
+//spaces around it
+void Degree(int &curmin, int &row, int &col){
+  int tempnumsurrounding = 0;
+  int curnumsurrounding= 0;
+
+  int vals[MAXSIZE];
+    for(int i = 0; i < size; i++){  
+      for(int j = 0; j < size; j++){
+
+
+        if(grid[i][j] == 0){
+          for (int k=0; k<size; k++) { //initializes vals array to 0
+            vals[k] = 0;
+          }
+
+          int v = 0;
+          for (int k=0; k<size; k++) { //stores legal values in vals array
+            if (legal[i][j][k]) { 
+              v++;
+            }
+          }
+          
+          if(v = curmin){
+            if(NumSurrounding(i, j) >= curnumsurrounding){
+              curnumsurrounding = NumSurrounding(i, j);
+              row = i;
+              col = j;
+            }
+          }
+        }
+      }
+    }
+    return;
+}
+
+//Function Uses the MRV/MCV heuristic to choose the next open spot
+
+void MRV(int &row, int &col){
+
+        int curmin = size;
+        int tempmin = size;
+        int vals[MAXSIZE];
+
+        for(int i = 0; i < size; i++){  
+          for(int j = 0; j < size; j++){
+
+
+            if(grid[i][j] == 0){
+              for (int k=0; k<size; k++) { //initializes vals array to 0
+                vals[k] = 0;
+              }
+
+              int v = 0;
+              for (int k=0; k<size; k++) { //stores legal values in vals array
+                if (legal[i][j][k]) { 
+                    v++;
+                }
+              }
+              tempmin = v;
+              if(tempmin < curmin){
+                curmin = tempmin;
+                row = i;
+                col = j;
+              }
+              if(tempmin == curmin){
+                Degree(curmin, row, col);
+                row = i;
+                col = j;
+              }
+            }
+        }
+      }
+        return;
+}
+//Function Uses the MRV/MCV heuristic to choose the next open spot
+//Doesnt work/is too slow
+void LCV(int &row, int &col){
+
+        int curmax = 0;
+        int tempmax = 0;
+        int vals[MAXSIZE];
+
+        for(int i = 0; i < size; i++){  
+          for(int j = 0; j < size; j++){
+
+
+            if(grid[i][j] == 0){
+              for (int k=0; k<size; k++) { //initializes vals array to 0
+                vals[k] = 0;
+              }
+
+              int v = 0;
+              for (int k=0; k<size; k++) { //stores legal values in vals array
+                if (legal[i][j][k]) { 
+                    v++;
+                }
+              }
+              tempmax = v;
+              if(tempmax >= curmax){
+                curmax = tempmax;
+                row = i;
+                col = j;
+              }
+              //if(tempmax == curmax){
+                //Degree(curmax, row, col);
+                //row = i;
+                //col = j;
+              //}
+            }
+        }
+      }
+        return;
+}
+
 // function looks through the grid to see if there are still open cells
 
 bool Finished(){
@@ -160,6 +388,7 @@ bool Finished(){
  * backtracking is necessary
  */
 
+//Fills all cells that have only one legal value
 void SinglelegalFill(void){
   for(int i = 0; i < size; i++){
     for(int j = 0; j < size; j++){
@@ -185,6 +414,7 @@ void SinglelegalFill(void){
 
 int Backtrack(void) {
 
+BTcounter++;
 int savegrid[MAXSIZE][MAXSIZE];  // local grid for backtracking
 int vals[MAXSIZE];  // legal values for the current cell
 int row = 0;
@@ -201,22 +431,9 @@ int col = 0;
       else { //if not finished
 
         //traversing the grid
-        bool flag = false;
-        for(int i = 0; i < size; i++){  
-          for(int j = 0; j < size; j++){
-            if(grid[i][j] == 0){
-              row = i;
-              col = j;
-              bool flag = true;
-            }
-            if (flag == true){
-              break;
-            }
-          }
-          if(flag == true){
-            break;
-          }
-        }
+        //Nextopenspot(row, col);
+        MRV(row, col);
+        //LCV(row, col);
 
 // The following segment finds the legal values for grid[i][j]
 // You should add code to order the vals array according to a heuristic
@@ -245,6 +462,7 @@ int col = 0;
           } 
           else {
             grid[row][col] = vals[k];
+            IVcounter++;
             RemoveLegal(row,col);
 
             if(Backtrack() == 0){
@@ -267,10 +485,14 @@ GetGrid( argv[1] );
 cout << "Sudoku grid\n";
 PrintGrid();
 InitLegal();
-SinglelegalFill();
+//SinglelegalFill();
 // You may want to call a function here to make easy inferences
 // In some cases this may solve it without backtracking
 Backtrack();
 //cout << "\n";
 PrintGrid();
+cout << "\n";
+cout << "BTcounter: "<< BTcounter;
+cout << "\n";
+cout << "IVcounter: "<< IVcounter << "\n";
 }
